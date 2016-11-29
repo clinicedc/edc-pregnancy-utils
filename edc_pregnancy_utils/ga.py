@@ -1,10 +1,7 @@
-from datetime import datetime
-
-from edc_base.utils import get_utcnow
-
 from .lmp import Lmp
 from .ultrasound import Ultrasound
 from .constants import LMP, ULTRASOUND
+from edc_offstudy.apps import ATTR
 
 
 class Ga:
@@ -14,10 +11,12 @@ class Ga:
         by default, if both Lmp and Ultrasound are provided, Ultrasound is used."""
         self.ultrasound = ultrasound or Ultrasound()
         try:
-            lmp = datetime.fromordinal(lmp.toordinal())
-        except AttributeError:
-            lmp = lmp.date
-        self.lmp = Lmp(lmp=lmp, reference_date=self.ultrasound.date or get_utcnow())
+            if prefer_ultrasound:
+                self.lmp = Lmp(lmp=lmp.date, reference_date=self.ultrasound.report_date or lmp.reference_date)
+            else:
+                self.lmp = Lmp(lmp=lmp.date, reference_date=lmp.reference_date or self.ultrasound.report_date)
+        except ATTR:
+            self.lmp = Lmp()
         self.ga = None
         self.method = None
         if prefer_ultrasound:
@@ -33,4 +32,8 @@ class Ga:
 
     @property
     def weeks(self):
-        return self.ga.weeks
+        try:
+            weeks = self.ga.weeks
+        except AttributeError:
+            weeks = None
+        return weeks

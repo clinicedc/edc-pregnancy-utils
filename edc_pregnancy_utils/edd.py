@@ -17,7 +17,6 @@ class Edd:
         try:
             self.edd, self.method, self.diffdays = self.get_edd()
         except TypeError as e:
-            print(str(e))
             if self.lmp.edd:
                 self.edd = self.lmp.edd
                 self.method = LMP

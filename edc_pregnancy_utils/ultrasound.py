@@ -1,14 +1,16 @@
+from datetime import datetime
+
 from dateutil.relativedelta import relativedelta
 
 
 class Ultrasound:
 
     def __init__(self, ultrasound_date=None, ga_weeks=None, ga_days=None):
-        self.date = None
+        self.report_date = None
         self.edd = None
         self.ga = None
         if ultrasound_date:
-            self.date = ultrasound_date
+            self.report_date = datetime.fromordinal(ultrasound_date.toordinal())
             if ga_weeks is not None:
                 if not 0 < ga_weeks < 40:
                     raise TypeError('Invalid Ultrasound GA weeks, expected 0 < ga_weeks < 40. Got {}'.format(ga_weeks))
@@ -20,4 +22,4 @@ class Ultrasound:
             except TypeError:
                 pass
             if self.ga:
-                self.edd = self.date + self.ga
+                self.edd = self.report_date + self.ga

@@ -231,7 +231,7 @@ class TestEdd(unittest.TestCase):
         self.assertEqual(edd.method, LMP)
         self.assertEqual(edd.diffdays, 10)
 
-    def test_edd_favors_lmp_11days(self):
+    def test_edd_favors_ultrasound_11days(self):
         """Asserts Edd for GA 16-21, with 11 days diff in edd calcs, uses Ultrasound.edd."""
         lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=22)
         lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))

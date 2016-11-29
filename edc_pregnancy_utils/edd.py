@@ -12,9 +12,9 @@ class Edd:
         self.method = None
         self.lmp = lmp or Lmp()
         self.ultrasound = ultrasound or Ultrasound()
-        self.method = None
         try:
-            self.edd = self.get_edd(relativedelta(days=abs(relativedelta(self.lmp.edd - self.ultrasound.date).days)))
+            self.edd, self.method = self.get_edd(
+                relativedelta(days=abs((self.lmp.edd - self.ultrasound.date).days)))
         except TypeError as e:
             if self.lmp.edd:
                 self.edd = self.lmp.edd
@@ -32,23 +32,23 @@ class Edd:
         if relativedelta(weeks=16) <= self.lmp.ga <= relativedelta(weeks=21) + relativedelta(days=6):
             if 0 <= delta.days <= 10:
                 edd = self.lmp.edd
-                self.method = LMP
+                method = LMP
             elif 10 < delta.days:
                 edd = self.ultrasound.edd
-                self.method = ULTRASOUND
+                method = ULTRASOUND
         elif (relativedelta(weeks=21) + relativedelta(days=6) < self.lmp.ga <=
               relativedelta(weeks=27) + relativedelta(days=6)):
             if 0 <= delta.days <= 14:
                 edd = self.lmp.edd
-                self.method = LMP
+                method = LMP
             elif 14 < delta.days:
                 edd = self.ultrasound.edd
-                self.method = ULTRASOUND
+                method = ULTRASOUND
         elif relativedelta(weeks=27) + relativedelta(days=6) < self.lmp.ga:
             if 0 <= delta.days <= 21:
                 edd = self.lmp.edd
-                self.method = LMP
+                method = LMP
             elif 21 < delta.days:
                 edd = self.ultrasound.edd
-                self.method = ULTRASOUND
-        return edd
+                method = ULTRASOUND
+        return edd, method

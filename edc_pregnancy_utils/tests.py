@@ -4,6 +4,7 @@ from dateutil.relativedelta import relativedelta
 
 from edc_base.utils import get_utcnow
 
+from .constants import ULTRASOUND, LMP
 from .edd import Edd
 from .ga import Ga
 from .lmp import Lmp
@@ -98,29 +99,49 @@ class TestPregnancyCalculations(unittest.TestCase):
         self.assertIsNone(ultrasound.ga)
         self.assertIsNone(ultrasound.edd)
 
-    def test_edd_with_ultrasound_none(self):
+    def test_edd_without_ultrasound(self):
         """Assert Edd chooses Lmp.edd if Utrasound is null."""
         dt = get_utcnow()
         lmp = Lmp(lmp=dt - (relativedelta(weeks=25) + relativedelta(days=3)))
         ultrasound = Ultrasound(None, 25, 3)
         edd = Edd(lmp, ultrasound)
         self.assertEqual(edd.edd, lmp.edd)
+        self.assertEqual(edd.method, LMP)
 
-    def test_edd_with_lmp_none(self):
+    def test_edd_without_lmp(self):
         """Assert Edd chooses Ultrasound.edd if Lmp is null."""
         ultrasound_dt = get_utcnow()
         lmp = Lmp()
         ultrasound = Ultrasound(ultrasound_dt, ga_weeks=25)
         edd = Edd(lmp, ultrasound)
         self.assertEqual(edd.edd, ultrasound.edd)
+        self.assertEqual(edd.method, ULTRASOUND)
 
-    def test_ga_with_lmp_none(self):
+    def test_ga_without_lmp_uses_ultrasound(self):
         """Assert Ga chooses Ultrasound.ga if Lmp is null."""
         ultrasound_dt = get_utcnow()
         lmp = Lmp()
         ultrasound = Ultrasound(ultrasound_dt, ga_weeks=25)
         ga = Ga(lmp, ultrasound)
         self.assertEqual(ga.ga, ultrasound.ga)
+        self.assertEqual(ga.method, ULTRASOUND)
+
+    def test_ga_without_ultrasound_uses_lmp(self):
+        """Assert Ga chooses Ultrasound.ga if Lmp is null."""
+        dt = get_utcnow()
+        lmp = Lmp(lmp=dt - (relativedelta(weeks=25) + relativedelta(days=3)))
+        ultrasound = Ultrasound()
+        ga = Ga(lmp, ultrasound)
+        self.assertEqual(ga.ga, lmp.ga)
+        self.assertEqual(ga.method, LMP)
+
+    def test_ga_without_lmp_without_ultrasound_is_none(self):
+        """Assert Ga null of no lmp and no ultrasound."""
+        lmp = Lmp()
+        ultrasound = Ultrasound()
+        ga = Ga(lmp, ultrasound)
+        self.assertEqual(ga.ga, None)
+        self.assertEqual(ga.method, None)
 
     def test_selects_lmp_edd(self):
         dt = get_utcnow()

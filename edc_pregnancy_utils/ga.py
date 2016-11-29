@@ -1,5 +1,6 @@
 from .lmp import Lmp
 from .ultrasound import Ultrasound
+from .constants import LMP, ULTRASOUND
 
 
 class Ga:
@@ -10,4 +11,12 @@ class Ga:
         except AttributeError:
             pass
         self.lmp = Lmp(lmp=lmp, reference_date=self.ultrasound.date)
-        self.ga = self.lmp.ga or ultrasound.ga
+        if self.lmp.ga:
+            self.ga = self.lmp.ga
+            self.method = LMP
+        elif ultrasound.ga:
+            self.ga = self.ultrasound.ga
+            self.method = ULTRASOUND
+        else:
+            self.ga = None
+            self.method = None

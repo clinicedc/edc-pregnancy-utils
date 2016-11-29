@@ -190,3 +190,200 @@ class TestPregnancyUtils(unittest.TestCase):
         ga = Ga(lmp, ultrasound, prefer_ultrasound=False)
         self.assertEqual(ga.weeks, 17)
         self.assertEqual(ga.method, LMP)
+
+
+class TestEdd(unittest.TestCase):
+
+    def test_parmeters_for_edd_tests_below(self):
+        """Assert parameters for tests below are correct."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=22)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        self.assertEqual(lmp.edd, datetime(2017, 2, 18))
+        self.assertEqual(lmp.ga.weeks, 18)
+        # US that calculates EDD within 7 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 15), ga_weeks=17)
+        self.assertEqual((lmp.edd - ultrasound.edd).days, 7)
+        # US that calculates EDD within 10 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 12), ga_weeks=17)
+        self.assertEqual((lmp.edd - ultrasound.edd).days, 10)
+        # US that calculates EDD within 11 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 11), ga_weeks=17)
+        self.assertEqual((lmp.edd - ultrasound.edd).days, 11)
+        self.assertEqual(datetime(2017, 2, 7), ultrasound.edd)
+
+    def test_edd_favors_lmp_7days(self):
+        """Asserts Edd for GA 16-21, with 7 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=22)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 15), ga_weeks=17)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(datetime(2017, 2, 18), edd.edd)
+        self.assertEqual(LMP, edd.method)
+        self.assertEqual(edd.diffdays, 7)
+
+    def test_edd_favors_lmp_10days(self):
+        """Asserts Edd for GA 16-21, with 10 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=22)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 12), ga_weeks=17)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(datetime(2017, 2, 18), edd.edd)
+        self.assertEqual(LMP, edd.method)
+        self.assertEqual(edd.diffdays, 10)
+
+    def test_edd_favors_lmp_11days(self):
+        """Asserts Edd for GA 16-21, with 11 days diff in edd calcs, uses Ultrasound.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=22)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 11), ga_weeks=17)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(datetime(2017, 2, 7), edd.edd)
+        self.assertEqual(ULTRASOUND, edd.method)
+        self.assertEqual(edd.diffdays, 11)
+
+    def test_parmeters_for_edd_tests_below_ga22(self):
+        """Assert parameters for tests below are correct."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=18)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        self.assertEqual(lmp.edd, datetime(2017, 3, 18))
+        self.assertEqual(lmp.ga.weeks, 22)
+        # US that calculates EDD within 13 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 21), ga_weeks=23)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 13)
+        self.assertEqual(ultrasound.edd, datetime(2017, 3, 31))
+        # US that calculates EDD within 14 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 22), ga_weeks=23)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 14)
+        self.assertEqual(ultrasound.edd, datetime(2017, 4, 1))
+        # US that calculates EDD within 15 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 23), ga_weeks=23)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 15)
+        self.assertEqual(ultrasound.edd, datetime(2017, 4, 2))
+
+    def test_edd_favors_lmp_13days_ga22(self):
+        """Asserts Edd for GA 22-27, with 13 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=18)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 21), ga_weeks=23)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 3, 18))
+        self.assertEqual(edd.method, LMP)
+        self.assertEqual(edd.diffdays, 13)
+
+    def test_edd_favors_lmp_14days_ga22(self):
+        """Asserts Edd for GA 22-27, with 14 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=18)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 22), ga_weeks=23)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 3, 18))
+        self.assertEqual(edd.method, LMP)
+        self.assertEqual(edd.diffdays, 14)
+
+    def test_edd_favors_lmp_15days_ga22(self):
+        """Asserts Edd for GA 22-27, with 15 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=18)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 23), ga_weeks=23)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 4, 2))
+        self.assertEqual(edd.method, ULTRASOUND)
+        self.assertEqual(edd.diffdays, 15)
+
+    def test_parmeters_for_edd_tests_below_ga27(self):
+        """Assert parameters for tests below are correct."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=13)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        self.assertEqual(lmp.edd, datetime(2017, 4, 22))
+        self.assertEqual(lmp.ga.weeks, 27)
+        # US that calculates EDD within 13 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 28), ga_weeks=27)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 13)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 5))
+        # US that calculates EDD within 14 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 29), ga_weeks=27)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 14)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 6))
+        # US that calculates EDD within 15 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 10, 30), ga_weeks=27)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 15)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 7))
+
+    def test_edd_favors_lmp_13days_ga27(self):
+        """Asserts Edd for GA 27, with 13 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=13)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 28), ga_weeks=27)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 4, 22))
+        self.assertEqual(edd.method, LMP)
+        self.assertEqual(edd.diffdays, 13)
+
+    def test_edd_favors_lmp_14days_ga27(self):
+        """Asserts Edd for GA 27, with 14 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=13)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 29), ga_weeks=27)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 4, 22))
+        self.assertEqual(edd.method, LMP)
+        self.assertEqual(edd.diffdays, 14)
+
+    def test_edd_favors_lmp_15days_ga27(self):
+        """Asserts Edd for GA 27, with 15 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=13)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 10, 30), ga_weeks=27)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 5, 7))
+        self.assertEqual(edd.method, ULTRASOUND)
+        self.assertEqual(edd.diffdays, 15)
+
+    def test_parmeters_for_edd_tests_below_ga28(self):
+        """Assert parameters for tests below are correct."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=12)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        self.assertEqual(lmp.edd, datetime(2017, 4, 29))
+        self.assertEqual(lmp.ga.weeks, 28)
+        # US that calculates EDD within 13 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 11, 5), ga_weeks=28)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 21)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 20))
+        # US that calculates EDD within 14 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 11, 6), ga_weeks=28)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 22)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 21))
+        # US that calculates EDD within 15 days of lmp.edd
+        ultrasound = Ultrasound(datetime(2016, 11, 7), ga_weeks=28)
+        self.assertEqual(abs((lmp.edd - ultrasound.edd).days), 23)
+        self.assertEqual(ultrasound.edd, datetime(2017, 5, 22))
+
+    def test_edd_favors_lmp_21days_ga28(self):
+        """Asserts Edd for GA 28, with 21 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=12)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 11, 5), ga_weeks=28)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 4, 29))
+        self.assertEqual(edd.method, LMP)
+        self.assertEqual(edd.diffdays, 21)
+
+    def test_edd_favors_lmp_22days_ga28(self):
+        """Asserts Edd for GA 28, with 21 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=12)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 11, 6), ga_weeks=28)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 5, 21))
+        self.assertEqual(edd.method, ULTRASOUND)
+        self.assertEqual(edd.diffdays, 22)
+
+    def test_edd_favors_lmp_23days_ga28(self):
+        """Asserts Edd for GA 28, with 21 days diff in edd calcs, uses Lmp.edd."""
+        lmp_dt = datetime(2016, 10, 15) - relativedelta(weeks=12)
+        lmp = Lmp(lmp=lmp_dt, reference_date=datetime(2016, 10, 15))
+        ultrasound = Ultrasound(datetime(2016, 11, 7), ga_weeks=28)
+        edd = Edd(lmp=lmp, ultrasound=ultrasound)
+        self.assertEqual(edd.edd, datetime(2017, 5, 22))
+        self.assertEqual(edd.method, ULTRASOUND)
+        self.assertEqual(edd.diffdays, 23)

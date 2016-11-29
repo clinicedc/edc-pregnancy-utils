@@ -1,3 +1,4 @@
+from datetime import date
 from dateutil.relativedelta import relativedelta
 
 from .constants import ULTRASOUND, LMP
@@ -10,12 +11,13 @@ class Edd:
     def __init__(self, lmp=None, ultrasound=None):
         self.edd = None
         self.method = None
+        self.diffdays = None
         self.lmp = lmp or Lmp()
         self.ultrasound = ultrasound or Ultrasound()
         try:
-            self.edd, self.method = self.get_edd(
-                relativedelta(days=abs((self.lmp.edd - self.ultrasound.date).days)))
+            self.edd, self.method, self.diffdays = self.get_edd()
         except TypeError as e:
+            print(str(e))
             if self.lmp.edd:
                 self.edd = self.lmp.edd
                 self.method = LMP
@@ -27,28 +29,30 @@ class Edd:
             else:
                 raise TypeError(str(e))
 
-    def get_edd(self, delta):
+    def get_edd(self):
         edd = None
-        if relativedelta(weeks=16) <= self.lmp.ga <= relativedelta(weeks=21) + relativedelta(days=6):
-            if 0 <= delta.days <= 10:
+        diffdays = abs((self.lmp.edd - self.ultrasound.edd).days)
+        dt = date.today()
+        if dt + relativedelta(weeks=16) <= dt + self.lmp.ga <= dt + (relativedelta(weeks=21) + relativedelta(days=6)):
+            if 0 <= diffdays <= 10:
                 edd = self.lmp.edd
                 method = LMP
-            elif 10 < delta.days:
+            elif 10 < diffdays:
                 edd = self.ultrasound.edd
                 method = ULTRASOUND
-        elif (relativedelta(weeks=21) + relativedelta(days=6) < self.lmp.ga <=
-              relativedelta(weeks=27) + relativedelta(days=6)):
-            if 0 <= delta.days <= 14:
+        elif (dt + (relativedelta(weeks=21) + relativedelta(days=6)) < dt + self.lmp.ga <=
+                dt + (relativedelta(weeks=27) + relativedelta(days=6))):
+            if 0 <= diffdays <= 14:
                 edd = self.lmp.edd
                 method = LMP
-            elif 14 < delta.days:
+            elif 14 < diffdays:
                 edd = self.ultrasound.edd
                 method = ULTRASOUND
-        elif relativedelta(weeks=27) + relativedelta(days=6) < self.lmp.ga:
-            if 0 <= delta.days <= 21:
+        elif dt + (relativedelta(weeks=27) + relativedelta(days=6)) < dt + self.lmp.ga:
+            if 0 <= diffdays <= 21:
                 edd = self.lmp.edd
                 method = LMP
-            elif 21 < delta.days:
+            elif 21 < diffdays:
                 edd = self.ultrasound.edd
                 method = ULTRASOUND
-        return edd, method
+        return edd, method, diffdays if edd else None

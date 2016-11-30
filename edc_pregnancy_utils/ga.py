@@ -1,7 +1,6 @@
 from .lmp import Lmp
 from .ultrasound import Ultrasound
 from .constants import LMP, ULTRASOUND
-from edc_offstudy.apps import ATTR
 
 
 class Ga:
@@ -15,7 +14,7 @@ class Ga:
                 self.lmp = Lmp(lmp=lmp.date, reference_date=self.ultrasound.report_date or lmp.reference_date)
             else:
                 self.lmp = Lmp(lmp=lmp.date, reference_date=lmp.reference_date or self.ultrasound.report_date)
-        except ATTR:
+        except AttributeError:
             self.lmp = Lmp()
         self.ga = None
         self.method = None

@@ -22,4 +22,4 @@ class Ultrasound:
             except TypeError:
                 pass
             if self.ga:
-                self.edd = self.report_date + self.ga
+                self.edd = self.report_date + relativedelta(weeks=40 - self.ga.weeks)

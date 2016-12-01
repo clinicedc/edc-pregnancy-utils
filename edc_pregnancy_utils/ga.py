@@ -11,9 +11,9 @@ class Ga:
         self.ultrasound = ultrasound or Ultrasound()
         try:
             if prefer_ultrasound:
-                self.lmp = Lmp(lmp=lmp.date, reference_date=self.ultrasound.report_date or lmp.reference_date)
+                self.lmp = Lmp(lmp=lmp.date, reference_date=self.ultrasound.ultrasound_date or lmp.reference_date)
             else:
-                self.lmp = Lmp(lmp=lmp.date, reference_date=lmp.reference_date or self.ultrasound.report_date)
+                self.lmp = Lmp(lmp=lmp.date, reference_date=lmp.reference_date or self.ultrasound.ultrasound_date)
         except AttributeError:
             self.lmp = Lmp()
         self.ga = None

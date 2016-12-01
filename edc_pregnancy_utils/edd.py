@@ -9,6 +9,7 @@ from .ultrasound import Ultrasound
 class Edd:
 
     def __init__(self, lmp=None, ultrasound=None):
+        """Returns an instance with the "confirmed" edd and the method of confirmation."""
         self.edd = None
         self.method = None
         self.diffdays = None
@@ -16,17 +17,13 @@ class Edd:
         self.ultrasound = ultrasound or Ultrasound()
         try:
             self.edd, self.method, self.diffdays = self.get_edd()
-        except TypeError as e:
+        except TypeError:
             if self.lmp.edd:
                 self.edd = self.lmp.edd
                 self.method = LMP
             elif self.ultrasound.edd:
                 self.edd = self.ultrasound.edd
                 self.method = ULTRASOUND
-            elif not self.lmp.edd and not self.ultrasound.edd:
-                pass
-            else:
-                raise TypeError(str(e))
 
     def get_edd(self):
         edd = None

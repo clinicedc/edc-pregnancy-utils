@@ -1,6 +1,6 @@
+from .constants import LMP, ULTRASOUND
 from .lmp import Lmp
 from .ultrasound import Ultrasound
-from .constants import LMP, ULTRASOUND
 
 
 class Ga:

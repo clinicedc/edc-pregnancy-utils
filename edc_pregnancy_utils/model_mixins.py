@@ -1,20 +1,21 @@
 from uuid import uuid4
 
 from django.apps import apps as django_apps
+from django.core.exceptions import ValidationError
+from django.core.validators import MinValueValidator
 from django.db import models
 from django.db.models import options
-
-from django_crypto_fields.fields.encrypted_char_field import EncryptedCharField
-from edc_registration.model_mixins import (
-    UpdatesOrCreatesRegistrationModelMixin, SubjectIdentifierModelMixin, AllocateSubjectIdentifierMixin)
-from edc_constants.choices import GENDER_UNDETERMINED, YES_NO
-from edc_base.model.validators.date import date_not_future, datetime_not_future
-from edc_protocol.validators import datetime_not_before_study_start
 from django.utils import timezone
+
+from django_crypto_fields.fields import EncryptedCharField
+from edc_base.model.validators import date_not_future, datetime_not_future
+from edc_constants.choices import GENDER_UNDETERMINED, YES_NO
 from edc_identifier.maternal_identifier import MaternalIdentifier
+from edc_protocol.validators import datetime_not_before_study_start
+from edc_registration.model_mixins import UpdatesOrCreatesRegistrationModelMixin, SubjectIdentifierModelMixin
 
 
-options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('delivery_model',)
+options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('delivery_model', 'birth_model')
 
 
 class BirthModelManager(models.Manager):
@@ -25,69 +26,82 @@ class BirthModelManager(models.Manager):
 
 class LabourAndDeliveryMixin(models.Model):
 
+    """A model mixin for Labour and Delivery models.
+
+    If these field attrs don't exist, you may need to add properties to the concrete model.
+    For example:
+
+        @property
+        def subject_type(self):
+            return'maternal'
+
+        @property
+        def study_site(self):
+            return self.subject_identifier[4:6]
+    """
+
     reference = models.UUIDField(default=uuid4, editable=False)
 
-    live_infants = models.IntegerField()
+    live_infants = models.IntegerField(
+        verbose_name="How many live infants were delivered? ")
 
     live_infants_to_register = models.IntegerField(
         verbose_name="How many infants are you registering to the study? ")
 
     birth_orders = models.CharField(
-        verbose_name="List birth order of infants to register separated by commas, or leave blank for all.",
+        verbose_name="Birth order of infants to register, blank for ALL.",
+        max_length=10,
         null=True,
         blank=True,
-        help_text='For example, ')
-
-    report_datetime = models.DateTimeField(
-        verbose_name="Report date",
-        validators=[
-            datetime_not_before_study_start,
-            datetime_not_future, ],
-        help_text='')
+        help_text=(
+            'Leave blank for all. If not blank, birth order numbers separated by commas, '
+            'e.g. 2,3 for triplets where only the second and third baby are registering to the study.'))
 
     delivery_datetime = models.DateTimeField(
         verbose_name="Date and time of delivery :",
         help_text="If TIME unknown, estimate",
         validators=[
-            datetime_not_future, ])
+            datetime_not_future,
+            datetime_not_before_study_start,
+        ])
 
     delivery_time_estimated = models.CharField(
         verbose_name="Is the delivery TIME estimated?",
         max_length=3,
         choices=YES_NO)
 
-    delivery_comment = models.TextField(
-        verbose_name="List any additional information about the labour and delivery (mother only) ",
-        max_length=250,
-        blank=True,
-        null=True)
-
     def save(self, *args, **kwargs):
-        maternal_identifier = MaternalIdentifier()
-        self.subject_identifier = maternal_identifier.identifier
-        maternal_identifier.deliver(self.live_infants)
+        if self.subject_identifier:
+            maternal_identifier = MaternalIdentifier(
+                identifier=self.subject_identifier)
+        else:
+            maternal_identifier = MaternalIdentifier(
+                subject_type_name=self.subject_type,
+                model=self._meta.label_lower,
+                study_site=self.study_site)
+            self.subject_identifier = maternal_identifier.identifier
+        maternal_identifier.deliver(
+            self.live_infants,
+            model=self._meta.birth_model,
+            subject_type_name=self.subject_type,
+            study_site=self.study_site,
+            birth_orders=self.birth_orders)
         super(LabourAndDeliveryMixin, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
+        birth_model = None
 
 
-class BirthMixin(SubjectIdentifierModelMixin, AllocateSubjectIdentifierMixin,
-                 UpdatesOrCreatesRegistrationModelMixin, models.Model):
+class BirthMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):
 
     delivery_reference = models.UUIDField()
 
-    birth_order = models.IntegerField()
+    birth_order = models.IntegerField(
+        validators=[MinValueValidator(1)])
 
-    birth_order_denominator = models.IntegerField()
-
-    singleton = models.BooleanField(default=True)
-
-    report_datetime = models.DateTimeField(
-        verbose_name="Date and Time Infant Enrolled",
-        validators=[
-            datetime_not_before_study_start,
-            datetime_not_future, ])
+    birth_order_denominator = models.IntegerField(
+        validators=[MinValueValidator(1)])
 
     first_name = EncryptedCharField(
         max_length=25,
@@ -118,34 +132,21 @@ class BirthMixin(SubjectIdentifierModelMixin, AllocateSubjectIdentifierMixin,
 
     def save(self, *args, **kwargs):
         if not self.first_name:
-            self.first_name = 'Baby{}{}'.format(str(self.birth_order, self.mother.lastname.lower().title()))
+            RegisteredSubject = django_apps.get_app_config('edc_registration').model
+            obj = RegisteredSubject.objects.get(subject_identifier=self.delivery.subject_identifier)
+            self.first_name = 'Baby{}{}'.format(str(self.birth_order, obj.lastname.lower().title()))
         delivery_model = django_apps.get_model(*self._meta.delivery_model.split('.'))
         delivery = delivery_model.objects.get(reference=self.delivery_reference)
         maternal_identifier = MaternalIdentifier(identifier=delivery.maternal_identifier)
-        self.subject_identifier = maternal_identifier.infants[self.birth_order]
-        
-        
-        else:
-        if self.dob != tz_local.self.delivery.delivery_datetime.
-        if self.singleton:
-            self.birth_order = 1
-            self.birth_order_denominator = 1
-        else:
-            
+        self.subject_identifier = maternal_identifier.infants[self.birth_order].identifier
+        if self.dob != timezone.localtime(delivery.delivery_datetime).date():
+            raise ValidationError(
+                'Infant date of birth must match date of delivery. Got {} != {}'.format(
+                    self.dob, timezone.localtime(delivery.delivery_datetime).date()))
         return super(BirthMixin, self).save(*args, **kwargs)
 
     def natural_key(self):
         return (self.subject_identifier, )
-
-    @property
-    def mother(self):
-        RegisteredSubject = django_apps.get_app_config('edc_registration').model
-        return RegisteredSubject.objects.get(subject_identifier=self.delivery.subject_identifier)
-
-    @property
-    def delivery(self):
-        delivery_model = django_apps.get_model(*self._meta.delivery_model)
-        return delivery_model.objects.get(reference=self.delivery_reference)
 
     class Meta:
         abstract = True

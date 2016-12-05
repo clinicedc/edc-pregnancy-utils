@@ -78,7 +78,8 @@ class LabourAndDeliveryMixin(models.Model):
             maternal_identifier = MaternalIdentifier(
                 subject_type_name=self.subject_type,
                 model=self._meta.label_lower,
-                study_site=self.study_site)
+                study_site=self.study_site,
+                last_name=self.last_name)
             self.subject_identifier = maternal_identifier.identifier
         maternal_identifier.deliver(
             self.live_infants,
@@ -131,14 +132,14 @@ class BirthMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelM
             self.gender, self.birth_order, self.birth_order_denominator)
 
     def save(self, *args, **kwargs):
-        if not self.first_name:
-            RegisteredSubject = django_apps.get_app_config('edc_registration').model
-            obj = RegisteredSubject.objects.get(subject_identifier=self.delivery.subject_identifier)
-            self.first_name = 'Baby{}{}'.format(str(self.birth_order, obj.lastname.lower().title()))
         delivery_model = django_apps.get_model(*self._meta.delivery_model.split('.'))
         delivery = delivery_model.objects.get(reference=self.delivery_reference)
-        maternal_identifier = MaternalIdentifier(identifier=delivery.maternal_identifier)
-        self.subject_identifier = maternal_identifier.infants[self.birth_order].identifier
+        maternal_identifier = MaternalIdentifier(identifier=delivery.subject_identifier)
+        self.subject_identifier = maternal_identifier.infants[self.birth_order - 1].identifier
+        if not self.first_name:
+            RegisteredSubject = django_apps.get_app_config('edc_registration').model
+            obj = RegisteredSubject.objects.get(subject_identifier=self.subject_identifier)
+            self.first_name = obj.first_name
         if self.dob != timezone.localtime(delivery.delivery_datetime).date():
             raise ValidationError(
                 'Infant date of birth must match date of delivery. Got {} != {}'.format(
@@ -150,7 +151,6 @@ class BirthMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelM
 
     class Meta:
         abstract = True
-        visit_schedule_name = None
         delivery_model = None
         unique_together = (
             ('delivery_reference', 'birth_order', 'birth_order_denominator'),

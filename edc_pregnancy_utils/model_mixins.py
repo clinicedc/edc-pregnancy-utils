@@ -24,7 +24,7 @@ class BirthModelManager(models.Manager):
         return self.get(subject_identifier=subject_identifier)
 
 
-class LabourAndDeliveryMixin(models.Model):
+class LabourAndDeliveryModelMixin(models.Model):
 
     """A model mixin for Labour and Delivery models.
 
@@ -87,14 +87,14 @@ class LabourAndDeliveryMixin(models.Model):
             subject_type_name=self.subject_type,
             study_site=self.study_site,
             birth_orders=self.birth_orders)
-        super(LabourAndDeliveryMixin, self).save(*args, **kwargs)
+        super(LabourAndDeliveryModelMixin, self).save(*args, **kwargs)
 
     class Meta:
         abstract = True
         birth_model = None
 
 
-class BirthMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):
+class BirthModelMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):
 
     delivery_reference = models.UUIDField()
 
@@ -144,7 +144,7 @@ class BirthMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelM
             raise ValidationError(
                 'Infant date of birth must match date of delivery. Got {} != {}'.format(
                     self.dob, timezone.localtime(delivery.delivery_datetime).date()))
-        return super(BirthMixin, self).save(*args, **kwargs)
+        return super(BirthModelMixin, self).save(*args, **kwargs)
 
     def natural_key(self):
         return (self.subject_identifier, )

@@ -41,3 +41,6 @@ class Ultrasound:
                 raise UltrasoundError(
                     'Ultrasound EDD and calculated EDD do not match. Got {} != {}.'.format(
                         ultrasound_edd.isoformat(), self.edd.isoformat()))
+
+    def __str__(self):
+        return 'Ultrasound(edd={}, ga={}, date={})'.format(self.edd, self.ga, self.ultrasound_date)

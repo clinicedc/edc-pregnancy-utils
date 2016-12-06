@@ -19,7 +19,7 @@ class Ga:
         self.ga = None
         self.method = None
         if prefer_ultrasound:
-            if ultrasound.ga:
+            if self.ultrasound.ga:
                 self.ga, self.method = self.ultrasound.ga, ULTRASOUND
             elif self.lmp.ga:
                 self.ga, self.method = self.lmp.ga, LMP

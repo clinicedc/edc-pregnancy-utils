@@ -81,13 +81,22 @@ class LabourAndDeliveryModelMixin(models.Model):
                 study_site=self.study_site,
                 last_name=self.last_name)
             self.subject_identifier = maternal_identifier.identifier
-        maternal_identifier.deliver(
-            self.live_infants,
-            model=self._meta.birth_model,
-            subject_type_name=self.subject_type,
-            study_site=self.study_site,
-            birth_orders=self.birth_orders)
+            maternal_identifier.deliver(
+                self.live_infants,
+                model=self._meta.birth_model,
+                subject_type_name=self.subject_type,
+                study_site=self.study_site,
+                birth_orders=self.birth_orders)
         super(LabourAndDeliveryModelMixin, self).save(*args, **kwargs)
+
+    @property
+    def infants(self):
+        infants = []
+        if self.subject_identifier:
+            maternal_identifier = MaternalIdentifier(
+                identifier=self.subject_identifier)
+            infants = maternal_identifier.infants
+        return infants
 
     class Meta:
         abstract = True

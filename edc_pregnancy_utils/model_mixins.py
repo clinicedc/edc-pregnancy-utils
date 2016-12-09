@@ -71,15 +71,14 @@ class LabourAndDeliveryModelMixin(models.Model):
         choices=YES_NO)
 
     def save(self, *args, **kwargs):
-        if self.subject_identifier:
+        if self.id:
             maternal_identifier = MaternalIdentifier(
                 identifier=self.subject_identifier)
         else:
             maternal_identifier = MaternalIdentifier(
                 subject_type_name=self.subject_type,
                 model=self._meta.label_lower,
-                study_site=self.study_site,
-                last_name=self.last_name)
+                study_site=self.study_site)
             self.subject_identifier = maternal_identifier.identifier
             maternal_identifier.deliver(
                 self.live_infants,
@@ -91,6 +90,7 @@ class LabourAndDeliveryModelMixin(models.Model):
 
     @property
     def infants(self):
+        """Returns a list of infant identifiers ordered by birth order."""
         infants = []
         if self.subject_identifier:
             maternal_identifier = MaternalIdentifier(
@@ -101,6 +101,7 @@ class LabourAndDeliveryModelMixin(models.Model):
     class Meta:
         abstract = True
         birth_model = None
+        consent_model = None
 
 
 class BirthModelMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):

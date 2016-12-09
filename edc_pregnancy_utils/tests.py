@@ -1,8 +1,9 @@
 import unittest
 
 from datetime import datetime
-
 from dateutil.relativedelta import relativedelta
+
+from django.apps import apps as django_apps
 
 from edc_base.utils import get_utcnow
 
@@ -11,6 +12,51 @@ from .edd import Edd
 from .ga import Ga
 from .lmp import Lmp
 from .ultrasound import Ultrasound, UltrasoundError
+from django.test.testcases import TestCase
+from edc_identifier.maternal_identifier import MaternalIdentifier
+from faker import Faker
+from edc_base.faker import EdcBaseProvider
+
+fake = Faker()
+fake.add_provider(EdcBaseProvider)
+
+
+class TestModel(TestCase):
+    """These were initially copied from edc_identifier."""
+    def setUp(self):
+        self.maternal_identifier = MaternalIdentifier(
+            subject_type_name='subject',
+            model='edc_example.enrollment',
+            protocol='000',
+            device_id='99',
+            study_site='40',
+            last_name=fake.last_name())
+
+    def test_maternal(self):
+        self.assertIsNotNone(self.maternal_identifier.identifier)
+
+    def test_deliver(self):
+        self.maternal_identifier.deliver(1, model='edc_example.maternallabdel')
+        self.assertEqual(self.maternal_identifier.infants[0].identifier, '000-40990001-6-10')
+
+    def test_deliver_dont_create_registered_subject(self):
+        RegisteredSubject = django_apps.get_app_config('edc_registration').model
+        self.maternal_identifier.deliver(1, model='edc_example.maternallabdel', create_registration=False)
+        self.assertEqual(self.maternal_identifier.infants[0].identifier, '000-40990001-6-10')
+        try:
+            RegisteredSubject.objects.get(subject_identifier='000-40990001-6-10')
+            self.fail('RegisteredSubject.DoesNotExist unexpectedly raised')
+        except RegisteredSubject.DoesNotExist:
+            pass
+
+    def test_deliver_create_registered_subject(self):
+        RegisteredSubject = django_apps.get_app_config('edc_registration').model
+        self.maternal_identifier.deliver(1, model='edc_example.maternallabdel', create_registration=True)
+        self.assertEqual(self.maternal_identifier.infants[0].identifier, '000-40990001-6-10')
+        try:
+            RegisteredSubject.objects.get(subject_identifier='000-40990001-6-10')
+        except RegisteredSubject.DoesNotExist:
+            self.fail('RegisteredSubject.DoesNotExist unexpectedly raised')
 
 
 class TestLmp(unittest.TestCase):

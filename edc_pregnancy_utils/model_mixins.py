@@ -71,21 +71,16 @@ class LabourAndDeliveryModelMixin(models.Model):
         choices=YES_NO)
 
     def save(self, *args, **kwargs):
-        if self.id:
+        if not self.id:
             maternal_identifier = MaternalIdentifier(
                 identifier=self.subject_identifier)
-        else:
-            maternal_identifier = MaternalIdentifier(
-                subject_type_name=self.subject_type,
-                model=self._meta.label_lower,
-                study_site=self.study_site)
-            self.subject_identifier = maternal_identifier.identifier
             maternal_identifier.deliver(
                 self.live_infants,
                 model=self._meta.birth_model,
                 subject_type_name=self.subject_type,
                 study_site=self.study_site,
-                birth_orders=self.birth_orders)
+                birth_orders=self.birth_orders,
+                create_registration=True)
         super(LabourAndDeliveryModelMixin, self).save(*args, **kwargs)
 
     @property

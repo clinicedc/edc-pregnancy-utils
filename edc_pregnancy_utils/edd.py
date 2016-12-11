@@ -27,6 +27,7 @@ class Edd:
 
     def get_edd(self):
         edd = None
+        method = None
         diffdays = abs((self.lmp.edd - self.ultrasound.edd).days)
         dt = date.today()
         if dt + relativedelta(weeks=16) <= dt + self.lmp.ga <= dt + (relativedelta(weeks=21) + relativedelta(days=6)):

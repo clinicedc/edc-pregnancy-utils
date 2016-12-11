@@ -31,8 +31,10 @@ class Ultrasound:
             else:
                 raise UltrasoundError(
                     'Ultrasound GA confirmed and GA calculated do not match. '
-                    'Got {} != {} using weeks={}, days={}.'.format(
-                        ultrasound_ga, calculated_ga, ga_confirmed_weeks, ga_confirmed_days))
+                    'Got ultrasound GA={}wks using confirmed ({}wks, {}days) and '
+                    'calculated GA={}wks using the ultrasound EDD {} - report date {} ({}wks).'.format(
+                        ultrasound_ga.weeks, ga_confirmed_weeks, ga_confirmed_days,
+                        calculated_ga.weeks, ultrasound_edd, self.ultrasound_date, relativedelta(days=tdelta.days).weeks))
             self.ga = ultrasound_ga
             calculated_edd = self.ultrasound_date + (relativedelta(weeks=40) - self.ga)
             if abs(ultrasound_edd - calculated_edd).days <= 6:

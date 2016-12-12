@@ -21,3 +21,11 @@ class Lmp:
             self.ga = relativedelta(weeks=int(40 - self.diffweeks))
             self.date = lmp
             self.reference_date = reference_date
+            try:
+                self.edd = self.edd.date()
+            except AttributeError:
+                pass
+            try:
+                self.date = self.date.date()
+            except AttributeError:
+                pass

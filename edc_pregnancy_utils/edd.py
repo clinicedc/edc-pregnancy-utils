@@ -24,6 +24,10 @@ class Edd:
             elif self.ultrasound.edd:
                 self.edd = self.ultrasound.edd
                 self.method = ULTRASOUND
+        try:
+            self.edd = self.edd.date()
+        except AttributeError:
+            pass
 
     def get_edd(self):
         edd = None

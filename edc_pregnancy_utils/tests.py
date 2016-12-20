@@ -1,10 +1,14 @@
 import unittest
 
-from datetime import datetime
+from datetime import datetime, date
 from dateutil.relativedelta import relativedelta
+from faker import Faker
 
 from django.apps import apps as django_apps
+from django.test.testcases import TestCase
 
+from edc_identifier.maternal_identifier import MaternalIdentifier
+from edc_base_test.faker import EdcBaseProvider
 from edc_base.utils import get_utcnow
 
 from .constants import ULTRASOUND, LMP
@@ -12,10 +16,6 @@ from .edd import Edd
 from .ga import Ga
 from .lmp import Lmp
 from .ultrasound import Ultrasound, UltrasoundError
-from django.test.testcases import TestCase
-from edc_identifier.maternal_identifier import MaternalIdentifier
-from faker import Faker
-from edc_base.faker import EdcBaseProvider
 
 fake = Faker()
 fake.add_provider(EdcBaseProvider)
@@ -69,7 +69,7 @@ class TestLmp(unittest.TestCase):
     def test_lmp_edd(self):
         """Assert Lmp return edd."""
         dt = get_utcnow()
-        edd = datetime.fromordinal((dt + relativedelta(days=280)).toordinal())
+        edd = datetime.fromordinal((dt + relativedelta(days=280)).toordinal()).date()
         self.assertEqual(edd, Lmp(lmp=dt, reference_date=get_utcnow()).edd)
 
     def test_lmp_ga_minus(self):
@@ -302,7 +302,7 @@ class TestEdd(unittest.TestCase):
 
     def test_edd_without_lmp(self):
         """Assert Edd chooses Ultrasound.edd if Lmp is null."""
-        ultrasound_date = get_utcnow()
+        ultrasound_date = get_utcnow().date()
         lmp = Lmp()
         ultrasound = Ultrasound(
             ultrasound_date=ultrasound_date,
@@ -321,12 +321,12 @@ class TestEddFunctional(unittest.TestCase):
         #       {case: (ultrasound_ga_confirmed_weeks, ultrasound_date_delta, expected_edd_diffdays, edd_choice) ...
         self.edds = {
             21: {
-                7: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 11)},
-                8: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 18)},
-                9: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 18)},
-                10: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 18)},
-                11: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 18)},
-                11: {'lmp_edd': datetime(2017, 2, 25), 'ultrasound_edd': datetime(2017, 2, 18)},
+                7: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 11)},
+                8: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 18)},
+                9: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 18)},
+                10: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 18)},
+                11: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 18)},
+                11: {'lmp_edd': date(2017, 2, 25), 'ultrasound_edd': date(2017, 2, 18)},
             },
         }
 
@@ -342,8 +342,8 @@ class TestEddFunctional(unittest.TestCase):
         }
         self.reference_date = datetime(2016, 10, 15)
         # results
-        self.lmp_edd = datetime(2017, 2, 18)
-        self.ultrasound_edd = datetime(2017, 2, 7)
+        self.lmp_edd = date(2017, 2, 18)
+        self.ultrasound_edd = date(2017, 2, 7)
 
     def test_edd_parameter_cases(self):
         """Assert parameters for tests below are correct."""

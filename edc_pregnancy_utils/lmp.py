@@ -13,8 +13,8 @@ class Lmp:
         self.diffweeks = None
         self.reference_date = None
         if lmp:
-            lmp = datetime.fromordinal(lmp.toordinal())
-            reference_date = datetime.fromordinal(reference_date.toordinal())
+            lmp = datetime.fromordinal(lmp.toordinal()).date()
+            reference_date = datetime.fromordinal(reference_date.toordinal()).date()
             self.edd = lmp + relativedelta(days=280)
             self.diffdays = abs(self.edd - reference_date).days
             self.diffweeks = self.diffdays / 7.0

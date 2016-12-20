@@ -14,8 +14,8 @@ class Ultrasound:
         self.edd = None
         self.ga = None
         if ultrasound_date and ultrasound_edd and ga_confirmed_weeks is not None:
-            self.ultrasound_date = datetime.fromordinal(ultrasound_date.toordinal())
-            ultrasound_edd = datetime.fromordinal(ultrasound_edd.toordinal())
+            self.ultrasound_date = datetime.fromordinal(ultrasound_date.toordinal()).date()
+            ultrasound_edd = datetime.fromordinal(ultrasound_edd.toordinal()).date()
             if not 0 < ga_confirmed_weeks < 40:
                 raise UltrasoundError(
                     'Invalid Ultrasound GA weeks, expected 0 < ga_weeks < 40. Got {}'.format(ga_confirmed_weeks))
@@ -34,7 +34,8 @@ class Ultrasound:
                     'Got ultrasound GA={}wks using confirmed ({}wks, {}days) and '
                     'calculated GA={}wks using the ultrasound EDD {} - report date {} ({}wks).'.format(
                         ultrasound_ga.weeks, ga_confirmed_weeks, ga_confirmed_days,
-                        calculated_ga.weeks, ultrasound_edd, self.ultrasound_date, relativedelta(days=tdelta.days).weeks))
+                        calculated_ga.weeks, ultrasound_edd, self.ultrasound_date,
+                        relativedelta(days=tdelta.days).weeks))
             self.ga = ultrasound_ga
             calculated_edd = self.ultrasound_date + (relativedelta(weeks=40) - self.ga)
             if abs(ultrasound_edd - calculated_edd).days <= 6:

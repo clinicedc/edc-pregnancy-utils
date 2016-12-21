@@ -11,8 +11,9 @@ from django_crypto_fields.fields import EncryptedCharField
 from edc_base.model.validators import date_not_future, datetime_not_future
 from edc_constants.choices import GENDER_UNDETERMINED, YES_NO
 from edc_identifier.maternal_identifier import MaternalIdentifier
+from edc_identifier.model_mixins import SubjectIdentifierOnlyFieldModelMixin
 from edc_protocol.validators import datetime_not_before_study_start
-from edc_registration.model_mixins import UpdatesOrCreatesRegistrationModelMixin, SubjectIdentifierModelMixin
+from edc_registration.model_mixins import UpdatesOrCreatesRegistrationModelMixin
 
 
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ('delivery_model', 'birth_model')
@@ -99,7 +100,7 @@ class LabourAndDeliveryModelMixin(models.Model):
         consent_model = None
 
 
-class BirthModelMixin(SubjectIdentifierModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):
+class BirthModelMixin(SubjectIdentifierOnlyFieldModelMixin, UpdatesOrCreatesRegistrationModelMixin, models.Model):
 
     delivery_reference = models.UUIDField()
 

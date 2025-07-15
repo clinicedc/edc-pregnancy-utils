@@ -1,7 +1,8 @@
 from datetime import date
+
 from dateutil.relativedelta import relativedelta
 
-from .constants import ULTRASOUND, LMP
+from .constants import LMP, ULTRASOUND
 from .lmp import Lmp
 from .ultrasound import Ultrasound
 
@@ -34,15 +35,22 @@ class Edd:
         method = None
         diffdays = abs((self.lmp.edd - self.ultrasound.edd).days)
         dt = date.today()
-        if dt + relativedelta(weeks=16) <= dt + self.lmp.ga <= dt + (relativedelta(weeks=21) + relativedelta(days=6)):
+        if (
+            dt + relativedelta(weeks=16)
+            <= dt + self.lmp.ga
+            <= dt + (relativedelta(weeks=21) + relativedelta(days=6))
+        ):
             if 0 <= diffdays <= 10:
                 edd = self.lmp.edd
                 method = LMP
             elif 10 < diffdays:
                 edd = self.ultrasound.edd
                 method = ULTRASOUND
-        elif (dt + (relativedelta(weeks=21) + relativedelta(days=6)) < dt + self.lmp.ga <=
-                dt + (relativedelta(weeks=27) + relativedelta(days=6))):
+        elif (
+            dt + (relativedelta(weeks=21) + relativedelta(days=6))
+            < dt + self.lmp.ga
+            <= dt + (relativedelta(weeks=27) + relativedelta(days=6))
+        ):
             if 0 <= diffdays <= 14:
                 edd = self.lmp.edd
                 method = LMP

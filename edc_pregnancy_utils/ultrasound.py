@@ -9,7 +9,13 @@ class UltrasoundError(Exception):
 
 class Ultrasound:
 
-    def __init__(self, ultrasound_date=None, ga_confirmed_weeks=None, ga_confirmed_days=None, ultrasound_edd=None):
+    def __init__(
+        self,
+        ultrasound_date=None,
+        ga_confirmed_weeks=None,
+        ga_confirmed_days=None,
+        ultrasound_edd=None,
+    ):
         self.ultrasound_date = None
         self.edd = None
         self.ga = None
@@ -18,32 +24,50 @@ class Ultrasound:
             ultrasound_edd = datetime.fromordinal(ultrasound_edd.toordinal()).date()
             if not 0 < ga_confirmed_weeks < 40:
                 raise UltrasoundError(
-                    'Invalid Ultrasound GA weeks, expected 0 < ga_weeks < 40. Got {}'.format(ga_confirmed_weeks))
+                    "Invalid Ultrasound GA weeks, expected 0 < ga_weeks < 40. Got {}".format(
+                        ga_confirmed_weeks
+                    )
+                )
             ga_confirmed_days = ga_confirmed_days or 0
             if not 0 <= ga_confirmed_days <= 6:
                 raise UltrasoundError(
-                    'Invalid Ultrasound GA days, expected 0 <= ga_days <= 6. Got {}'.format(ga_confirmed_days))
+                    "Invalid Ultrasound GA days, expected 0 <= ga_days <= 6. Got {}".format(
+                        ga_confirmed_days
+                    )
+                )
             tdelta = ultrasound_edd - self.ultrasound_date
             calculated_ga = relativedelta(weeks=40) - relativedelta(days=tdelta.days)
-            ultrasound_ga = relativedelta(weeks=ga_confirmed_weeks) + relativedelta(days=ga_confirmed_days)
+            ultrasound_ga = relativedelta(weeks=ga_confirmed_weeks) + relativedelta(
+                days=ga_confirmed_days
+            )
             if ultrasound_ga.weeks == calculated_ga.weeks:
                 self.ga = calculated_ga
             else:
                 raise UltrasoundError(
-                    'Ultrasound GA confirmed and GA calculated do not match. '
-                    'Got ultrasound GA={}wks using confirmed ({}wks, {}days) and '
-                    'calculated GA={}wks using the ultrasound EDD {} - report date {} ({}wks).'.format(
-                        ultrasound_ga.weeks, ga_confirmed_weeks, ga_confirmed_days,
-                        calculated_ga.weeks, ultrasound_edd, self.ultrasound_date,
-                        relativedelta(days=tdelta.days).weeks))
+                    "Ultrasound GA confirmed and GA calculated do not match. "
+                    "Got ultrasound GA={}wks using confirmed ({}wks, {}days) and "
+                    "calculated GA={}wks using the ultrasound EDD {} - report date {} ({}wks).".format(
+                        ultrasound_ga.weeks,
+                        ga_confirmed_weeks,
+                        ga_confirmed_days,
+                        calculated_ga.weeks,
+                        ultrasound_edd,
+                        self.ultrasound_date,
+                        relativedelta(days=tdelta.days).weeks,
+                    )
+                )
             self.ga = ultrasound_ga
             calculated_edd = self.ultrasound_date + (relativedelta(weeks=40) - self.ga)
             if abs(ultrasound_edd - calculated_edd).days <= 6:
                 self.edd = ultrasound_edd
             else:
                 raise UltrasoundError(
-                    'Ultrasound EDD and calculated EDD do not match. Got {} != {}.'.format(
-                        ultrasound_edd.isoformat(), self.edd.isoformat()))
+                    "Ultrasound EDD and calculated EDD do not match. Got {} != {}.".format(
+                        ultrasound_edd.isoformat(), self.edd.isoformat()
+                    )
+                )
 
     def __str__(self):
-        return 'Ultrasound(edd={}, ga={}, date={})'.format(self.edd, self.ga, self.ultrasound_date)
+        return "Ultrasound(edd={}, ga={}, date={})".format(
+            self.edd, self.ga, self.ultrasound_date
+        )

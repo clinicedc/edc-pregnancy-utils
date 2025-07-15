@@ -7,12 +7,13 @@ from django.db import models
 from django.db.models import options
 from django.utils import timezone
 from django_crypto_fields.fields import EncryptedCharField
-from edc_base.model.validators import date_not_future, datetime_not_future
 from edc_constants.choices import GENDER_UNDETERMINED, YES_NO
-from edc_identifier.maternal_identifier import MaternalIdentifier
 from edc_identifier.model_mixins import UniqueSubjectIdentifierFieldMixin
+from edc_model.validators import date_not_future, datetime_not_future
 from edc_protocol.validators import datetime_not_before_study_start
 from edc_registration.model_mixins import UpdatesOrCreatesRegistrationModelMixin
+
+from .maternal_identifier import MaternalIdentifier
 
 options.DEFAULT_NAMES = options.DEFAULT_NAMES + ("delivery_model", "birth_model")
 
@@ -26,7 +27,9 @@ class BirthModelManager(models.Manager):
 class LabourAndDeliveryModelMixin(models.Model):
     """A model mixin for Labour and Delivery models.
 
-    If these field attrs don't exist, you may need to add properties to the concrete model.
+    If these field attrs don't exist, you may need to add properties
+    to the concrete model.
+
     For example:
 
         @property
@@ -52,8 +55,9 @@ class LabourAndDeliveryModelMixin(models.Model):
         null=True,
         blank=True,
         help_text=(
-            "Leave blank for all. If not blank, birth order numbers separated by commas, "
-            "e.g. 2,3 for triplets where only the second and third baby are registering to the study."
+            "Leave blank for all. If not blank, birth order numbers "
+            "separated by commas, e.g. 2,3 for triplets where only the "
+            "second and third baby are registering to the study."
         ),
     )
 
@@ -113,7 +117,7 @@ class BirthModelMixin(
         verbose_name="Infant's first name",
         blank=True,
         help_text=(
-            "Leave blank if not yet decided. If blank " "EDC will generate a temporary name"
+            "Leave blank if not yet decided. If blank EDC will generate a temporary name"
         ),
     )
 

@@ -2,65 +2,16 @@ import unittest
 from datetime import date, datetime
 
 from dateutil.relativedelta import relativedelta
-from django.apps import apps as django_apps
-from django.test.testcases import TestCase
-from edc_base.utils import get_utcnow
-from edc_base_test.faker import EdcBaseProvider
-from edc_identifier.maternal_identifier import MaternalIdentifier
+from edc_utils import get_utcnow
 from faker import Faker
 
-from .constants import LMP, ULTRASOUND
-from .edd import Edd
-from .ga import Ga
-from .lmp import Lmp
-from .ultrasound import Ultrasound, UltrasoundError
+from edc_pregnancy_utils.constants import LMP, ULTRASOUND
+from edc_pregnancy_utils.edd import Edd
+from edc_pregnancy_utils.ga import Ga
+from edc_pregnancy_utils.lmp import Lmp
+from edc_pregnancy_utils.ultrasound import Ultrasound, UltrasoundError
 
 fake = Faker()
-fake.add_provider(EdcBaseProvider)
-
-
-class TestModel(TestCase):
-    """These were initially copied from edc_identifier."""
-
-    def setUp(self):
-        self.maternal_identifier = MaternalIdentifier(
-            subject_type_name="subject",
-            model="edc_example.enrollment",
-            protocol="000",
-            device_id="99",
-            study_site="40",
-            last_name=fake.last_name(),
-        )
-
-    def test_maternal(self):
-        self.assertIsNotNone(self.maternal_identifier.identifier)
-
-    def test_deliver(self):
-        self.maternal_identifier.deliver(1, model="edc_example.maternallabdel")
-        self.assertEqual(self.maternal_identifier.infants[0].identifier, "000-40990001-6-10")
-
-    def test_deliver_dont_create_registered_subject(self):
-        RegisteredSubject = django_apps.get_app_config("edc_registration").model
-        self.maternal_identifier.deliver(
-            1, model="edc_example.maternallabdel", create_registration=False
-        )
-        self.assertEqual(self.maternal_identifier.infants[0].identifier, "000-40990001-6-10")
-        try:
-            RegisteredSubject.objects.get(subject_identifier="000-40990001-6-10")
-            self.fail("RegisteredSubject.DoesNotExist unexpectedly raised")
-        except RegisteredSubject.DoesNotExist:
-            pass
-
-    def test_deliver_create_registered_subject(self):
-        RegisteredSubject = django_apps.get_app_config("edc_registration").model
-        self.maternal_identifier.deliver(
-            1, model="edc_example.maternallabdel", create_registration=True
-        )
-        self.assertEqual(self.maternal_identifier.infants[0].identifier, "000-40990001-6-10")
-        try:
-            RegisteredSubject.objects.get(subject_identifier="000-40990001-6-10")
-        except RegisteredSubject.DoesNotExist:
-            self.fail("RegisteredSubject.DoesNotExist unexpectedly raised")
 
 
 class TestLmp(unittest.TestCase):
@@ -81,13 +32,25 @@ class TestLmp(unittest.TestCase):
         dt = get_utcnow()
         lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt)
         self.assertEqual(lmp.ga.weeks, 25)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt - relativedelta(days=5))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt - relativedelta(days=5),
+        )
         self.assertEqual(lmp.ga.weeks, 24)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt - relativedelta(days=6))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt - relativedelta(days=6),
+        )
         self.assertEqual(lmp.ga.weeks, 24)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt - relativedelta(days=7))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt - relativedelta(days=7),
+        )
         self.assertEqual(lmp.ga.weeks, 24)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt - relativedelta(days=8))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt - relativedelta(days=8),
+        )
         self.assertEqual(lmp.ga.weeks, 23)
 
     def test_lmp_ga_plus(self):
@@ -95,17 +58,35 @@ class TestLmp(unittest.TestCase):
         dt = get_utcnow()
         lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt)
         self.assertEqual(lmp.ga.weeks, 25)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt - relativedelta(days=1))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt - relativedelta(days=1),
+        )
         self.assertEqual(lmp.ga.weeks, 24)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt + relativedelta(days=1))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt + relativedelta(days=1),
+        )
         self.assertEqual(lmp.ga.weeks, 25)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt + relativedelta(days=2))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt + relativedelta(days=2),
+        )
         self.assertEqual(lmp.ga.weeks, 25)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt + relativedelta(days=6))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt + relativedelta(days=6),
+        )
         self.assertEqual(lmp.ga.weeks, 25)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt + relativedelta(days=7))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt + relativedelta(days=7),
+        )
         self.assertEqual(lmp.ga.weeks, 26)
-        lmp = Lmp(lmp=dt - relativedelta(weeks=25), reference_date=dt + relativedelta(days=8))
+        lmp = Lmp(
+            lmp=dt - relativedelta(weeks=25),
+            reference_date=dt + relativedelta(days=8),
+        )
         self.assertEqual(lmp.ga.weeks, 26)
 
 
@@ -127,9 +108,8 @@ class TestUltrasound(unittest.TestCase):
                     )
                 except UltrasoundError as e:
                     self.fail(
-                        "UltrasoundError unexpectedly raised for weeks={}, days={}. Got {}".format(
-                            weeks, days, str(e)
-                        )
+                        "UltrasoundError unexpectedly raised for weeks={}, "
+                        "days={}. Got {}".format(weeks, days, str(e))
                     )
 
     def test_ultrasound_days_boundaries(self):
@@ -192,7 +172,7 @@ class TestUltrasound(unittest.TestCase):
             pass
 
     def test_ultrasound_weeks_floor(self):
-        """Assert ga weeks is rounded down to nearest int."""
+        """Assert `ga weeks` is rounded down to nearest int."""
         ultrasound_date = get_utcnow()
         for weeks in range(1, 40):
             for days in range(0, 7):
@@ -214,7 +194,7 @@ class TestUltrasound(unittest.TestCase):
         self.assertIsNone(ultrasound.edd)
 
     def test_ultrasound_ga(self):
-        """Assert Ultrasound returns ga in weeks, as is."""
+        """Assert Ultrasound returns ga `in weeks`, as is."""
         ultrasound_date = get_utcnow()
         ultrasound = Ultrasound(
             ultrasound_date=ultrasound_date,
@@ -287,7 +267,9 @@ class TestGa(unittest.TestCase):
         self.assertEqual(ga.method, ULTRASOUND)
 
     def test_ga_confirmed_weeks_from_lmp_if_both_and_pref_lmp(self):
-        """Assert Ga chooses Lmp.ga if both Lmp and Ultrasound provided but prefer_ultrasound=False."""
+        """Assert Ga chooses Lmp.ga if both Lmp and Ultrasound
+        provided but prefer_ultrasound=False.
+        """
         ultrasound_date = get_utcnow()
         lmp_dt = get_utcnow() - (relativedelta(weeks=23) + relativedelta(days=3))
         lmp = Lmp(lmp=lmp_dt, reference_date=get_utcnow())
@@ -339,17 +321,32 @@ class TestEdd(unittest.TestCase):
 class TestEddFunctional(unittest.TestCase):
 
     def setUp(self):
-        # {
-        #   lmp_ga
-        #       {case: (ultrasound_ga_confirmed_weeks, ultrasound_date_delta, expected_edd_diffdays, edd_choice) ...
         self.edds = {
             21: {
-                7: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 11)},
-                8: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 18)},
-                9: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 18)},
-                10: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 18)},
-                11: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 18)},
-                11: {"lmp_edd": date(2017, 2, 25), "ultrasound_edd": date(2017, 2, 18)},
+                7: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 11),
+                },
+                8: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 18),
+                },
+                9: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 18),
+                },
+                10: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 18),
+                },
+                11: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 18),
+                },
+                12: {
+                    "lmp_edd": date(2017, 2, 25),
+                    "ultrasound_edd": date(2017, 2, 18),
+                },
             },
         }
 
@@ -375,6 +372,7 @@ class TestEddFunctional(unittest.TestCase):
             lmp = Lmp(lmp=lmp_dt, reference_date=self.reference_date)
             for case, parameters in self.parameters.get(ga_lmp).items():
                 ga_ultrasound, delta, diffdays, edd_attr, edd_method = parameters
+
                 self.assertEqual(lmp.edd, self.edds.get(ga_lmp).get(case).get("lmp_edd"))
                 self.assertEqual(lmp.ga.weeks, ga_lmp)
                 ultrasound_date = self.reference_date - delta
@@ -387,7 +385,16 @@ class TestEddFunctional(unittest.TestCase):
                 except UltrasoundError as e:
                     raise UltrasoundError(
                         "{} {}.".format(
-                            str(e), str([ga_ultrasound, delta, diffdays, edd_attr, edd_method])
+                            str(e),
+                            str(
+                                [
+                                    ga_ultrasound,
+                                    delta,
+                                    diffdays,
+                                    edd_attr,
+                                    edd_method,
+                                ]
+                            ),
                         )
                     )
                 self.assertEqual(

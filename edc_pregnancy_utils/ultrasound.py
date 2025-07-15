@@ -46,7 +46,8 @@ class Ultrasound:
                 raise UltrasoundError(
                     "Ultrasound GA confirmed and GA calculated do not match. "
                     "Got ultrasound GA={}wks using confirmed ({}wks, {}days) and "
-                    "calculated GA={}wks using the ultrasound EDD {} - report date {} ({}wks).".format(
+                    "calculated GA={}wks using the ultrasound EDD {} - "
+                    "report date {} ({}wks).".format(
                         ultrasound_ga.weeks,
                         ga_confirmed_weeks,
                         ga_confirmed_days,
